@@ -28,6 +28,10 @@ No se utilizan bases de datos. La información se almacena únicamente mediante 
 
 No es necesario completar los tests ni agregar comentarios innecesarios.
 
+Todos los identificadores enviados en una solicitud forman parte de su cuerpo JSON, nunca de la ruta ni de parámetros de consulta. Las consultas por identificador utilizan POST y responden con estado 200. Las bajas utilizan DELETE con cuerpo JSON. Los identificadores y el DNI son enteros positivos; `fechaNacimiento` se envía como fecha ISO válida y se devuelve como cadena ISO.
+
+Para dar de baja un usuario, este servicio consulta `GET /ejemplar` de gestión de ejemplares mediante `EJEMPLARES_SERVICE_URL`. La baja se rechaza si el usuario posee algún ejemplar o si no puede verificarse la propiedad.
+
 ## Entidades a implementar
 
 ### Clase `Comunidad`
@@ -58,15 +62,20 @@ export class Usuario {
 
 ### Obtener los participantes registrados de una comunidad
 
-* HTTP Request: GET
+* HTTP Request: POST
 
-* Endpoint: `/comunidad/:comunidadId/miembros`
+* Endpoint: `/comunidad/miembros/consulta`
+
+* Cuerpo:
+
+  * `comunidadId`
 
 * Salida: todos los `usuarioId`, `nombre`, `apellido`, `correoElectronico`, `fechaNacimiento` y `dni` registrados en la comunidad.
 
 * Códigos de estado:
 
   * Operación exitosa: 200
+  * Faltan valores: 400
   * La comunidad no existe: 404
   * Datos no procesables: 422
 
@@ -93,13 +102,18 @@ export class Usuario {
 
 * HTTP Request: DELETE
 
-* Endpoint: `/comunidad/:comunidadId`
+* Endpoint: `/comunidad`
+
+* Cuerpo:
+
+  * `comunidadId`
 
 * Salida: `comunidadId`
 
 * Códigos de estado:
 
   * Operación exitosa: 200
+  * Faltan valores: 400
   * La comunidad no existe: 404
   * Datos no procesables: 422
 
@@ -107,10 +121,11 @@ export class Usuario {
 
 * HTTP Request: PATCH
 
-* Endpoint: `/comunidad/:comunidadId`
+* Endpoint: `/comunidad`
 
 * Cuerpo:
 
+  * `comunidadId`
   * `nombre`
 
 * Salida: `comunidadId`, `nombre`
@@ -127,13 +142,19 @@ export class Usuario {
 
 * HTTP Request: DELETE
 
-* Endpoint: `/comunidad/:comunidadId/miembros/:usuarioId`
+* Endpoint: `/comunidad/miembros`
+
+* Cuerpo:
+
+  * `comunidadId`
+  * `usuarioId`
 
 * Salida: `comunidadId`, `usuarioId`
 
 * Códigos de estado:
 
   * Operación exitosa: 200
+  * Faltan valores: 400
   * Datos no procesables: 422
   * La comunidad no existe: 404
   * El usuario no existe: 404
@@ -143,10 +164,11 @@ export class Usuario {
 
 * HTTP Request: POST
 
-* Endpoint: `/comunidad/:comunidadId/miembros`
+* Endpoint: `/comunidad/miembros`
 
 * Cuerpo:
 
+  * `comunidadId`
   * `usuarioId`
 
 * Salida: `comunidadId`, `usuarioId`
@@ -177,31 +199,32 @@ export class Usuario {
 
 ### Obtener el nombre de una comunidad
 
-* HTTP Request: GET
+* HTTP Request: POST
 
-* Endpoint: `/comunidad/:comunidadId`
+* Endpoint: `/comunidad/consulta`
+
+* Cuerpo:
+
+  * `comunidadId`
 
 * Salida: `comunidadId`, `nombre`
 
 * Códigos de estado:
 
   * Operación exitosa: 200
+  * Faltan valores: 400
   * Datos no procesables: 422
   * La comunidad no existe: 404
 
 ### Obtener determinados usuarios
 
-* HTTP Request: GET
+* HTTP Request: POST
 
 * Endpoint: `/usuario/por-ids`
 
-* Parámetros de consulta:
+* Cuerpo:
 
-  * `ids`: lista de `usuarioId`
-
-* Ejemplo:
-
-  * `/usuario/por-ids?ids=1,2,3`
+  * `ids`: arreglo de `usuarioId`
 
 * Salida: `usuarioId`, `nombre`, `apellido`, `correoElectronico`, `fechaNacimiento` y `dni` de los usuarios especificados.
 
@@ -226,9 +249,13 @@ export class Usuario {
 
 ### Obtener los datos de un usuario
 
-* HTTP Request: GET
+* HTTP Request: POST
 
-* Endpoint: `/usuario/:usuarioId`
+* Endpoint: `/usuario/consulta`
+
+* Cuerpo:
+
+  * `usuarioId`
 
 * Salida:
 
@@ -242,6 +269,7 @@ export class Usuario {
 * Códigos de estado:
 
   * Operación exitosa: 200
+  * Faltan valores: 400
   * El usuario no existe: 404
   * Datos no procesables: 422
 
@@ -272,24 +300,32 @@ export class Usuario {
 
 * HTTP Request: DELETE
 
-* Endpoint: `/usuario/:usuarioId`
+* Endpoint: `/usuario`
+
+* Cuerpo:
+
+  * `usuarioId`
 
 * Salida: `usuarioId`
 
 * Códigos de estado:
 
   * Operación exitosa: 200
+  * Faltan valores: 400
   * El usuario no existe: 404
   * Datos no procesables: 422
+  * El usuario posee ejemplares: 409
+  * No se pudo consultar gestión de ejemplares: 503
 
 ### Modificar el nombre, apellido, correo electrónico, fecha de nacimiento y DNI de un usuario
 
 * HTTP Request: PUT
 
-* Endpoint: `/usuario/:usuarioId`
+* Endpoint: `/usuario`
 
 * Cuerpo:
 
+  * `usuarioId`
   * `nombre`
   * `apellido`
   * `correoElectronico`
@@ -310,9 +346,9 @@ export class Usuario {
 
 * HTTP Request: PATCH
 
-* Endpoint: `/usuario/:usuarioId`
+* Endpoint: `/usuario`
 
-* Cuerpo: uno o más de los siguientes valores:
+* Cuerpo: `usuarioId` y uno o más de los siguientes valores:
 
   * `nombre`
   * `apellido`
